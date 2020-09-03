@@ -1,43 +1,35 @@
 'use strict';
 
-const net = require('net');
+const io = require('socket.io')(process.env.PORT || 3000);
 
-const port = process.env.PORT || 3000;
-const server = net.createServer();
-
-server.listen(port, () => {
-    console.log(`Server up on ${port}`);
-});
-
-let socketPool = {};
-
-server.on('connection', (socket) => {
-    const id = `Socket-${Math.random()}`;
-    socketPool[id] = socket;
-
-    socket.on('data', (buffer) => dispatchEvent(buffer));
-    socket.on('error', (e) => { console.log('SOCKET ERROR', e); });
-    socket.on('end', (e) => { delete socketPool[id]; });
-
+io.on('connection', socket => {
+    console.log('CONNECTED', socket.id);
 })
 
-server.on('error', (e) => {
-    console.error('SERVER ERROR', e.message);
+const caps = io.of('/caps');
+caps.on('connection', socket => {
+    socket.on('join', room => {
+        console.log('joined', room);
+        socket.join(room);
+    });
+    socket.on('pickup', payload => {
+        logEvent('pickup', payload);
+        caps.emit('pickup', payload);
+    });
+    socket.on('in-transit', payload => {
+        logEvent('in-transit', payload);
+        caps.to(payload.store).emit('in-transit', payload);
+    });
+    socket.on('delivered', payload => {
+        logEvent('delivered', payload);
+        caps.to(payload.store).emit('delivered', payload);
+    });
 });
 
-function dispatchEvent(buffer) {
-    let message = JSON.parse(buffer.toString().trim());
-    if(message.event && message.payload){
-        console.log('EVENT', message);
-        broadcast(message);
-    } else {
-        console.log('incoming data requires an "event" property and a "payload" property'); // TODO: figure out something better here/send a message back to client saying that there needs to be an event and a payload
-    }
-}
-
-function broadcast(message){
-    let payload = JSON.stringify(message);
-    for(let socket in socketPool){
-        socketPool[socket].write(payload);
-    }
+function logEvent(event, payload){
+    console.log('EVENT', {
+        event,
+        time: new Date(),
+        payload,
+    })
 }

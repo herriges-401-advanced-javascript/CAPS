@@ -1,43 +1,35 @@
 'use strict';
 
-const net = require('net');
-const client = new net.Socket();
-const host = process.env.HOST || 'localhost';
-const port = process.env.PORT || 3000;
+const io = require('socket.io-client');
+const capsChannel = io.connect('http://localhost:3000/caps');
+capsChannel.emit('join', 'driver');
 
-client.connect(port, host, () => {});
-client.on('data', function (data) {
-    let status = JSON.parse(data.toString().trim());
-    if(status.event === 'pickup'){
-        handlePickup(status);
-        handleDelivered(status);
-    }
+capsChannel.on('pickup', payload => {
+    handlePickup(payload);
+    handleDelivered(payload);
 });
+
 
 function handlePickup(payload){
     setTimeout(() => {
-        console.log(`picking up ${payload.payload.orderId}`);
+        console.log(`picking up ${payload.orderId}`);
         let message = {
             event: 'in-transit',
             time: new Date(),
             payload: payload.payload,
         }
-        message = JSON.stringify(message);
-        client.write(message);
-    }, 1000)
+        capsChannel.emit('in-transit', payload);
+    }, 1500)
 }
 
 function handleDelivered(payload){
     setTimeout(() => {
-        console.log(`Delivered order ${payload.payload.orderId}`)
+        console.log(`Delivered order ${payload.orderId}`)
         let message = {
             event: 'delivered',
             time: new Date(),
             payload: payload.payload,
         }
-        message = JSON.stringify(message);
-        client.write(message);
+        capsChannel.emit('delivered', payload);
     }, 3000)
 }
-
-
