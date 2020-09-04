@@ -23,7 +23,7 @@ function generateOrderData(){
         orderId: faker.random.uuid(),
         customer: faker.name.findName(),
         address: faker.address.streetAddress(),
-    }
+    };
 }
 
 function logDelivered(payload){
