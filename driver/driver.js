@@ -12,13 +12,14 @@ queue.trigger('getall', 'pickup');
 
 function handlePickup(payload){
     setTimeout(() => {
-        queue.trigger('in-transit', payload);
+        queue.trigger('in-transit', payload.payload);
         handleDelivered(payload);
     }, 1500)
 }
 
 function handleDelivered(payload){
     setTimeout(() => {
-        queue.trigger('delivered', payload);
+        console.log(`Delivered` ,payload);
+        queue.trigger('delivered', payload.payload);
     }, 3000)
 }

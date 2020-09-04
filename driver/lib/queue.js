@@ -15,12 +15,12 @@ class Queue {
     subscribe(event, fn){
         this.socket.emit('subscribe', {event, clientId:this.id});
         this.socket.on(event, data => {
-            console.log(data);
-            let {orderId} = data;
+            console.log('datafewankja;wklef;oijaewf', data);
+            let {orderId} = data.payload;
+            console.log('orderId', orderId);
             this.socket.emit('received', {orderId, event, clientId: this.id});
             fn(data);
-        });
-    
+        });    
     }
 
 }

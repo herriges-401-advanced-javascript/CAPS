@@ -21,14 +21,17 @@ caps.on('connection', socket => {
     });
 
     socket.on('received', payload => {
-        delete queue[payload.orderId];
+        console.log('payload', payload);
+        console.log('queue', queue);
+        delete queue[payload.event][payload.clientId][payload.orderId];
+        console.log('queue', queue);
         logEvent('received', payload);
 
     });
     socket.on('pickup', payload => {
-
+        console.log('payload', payload);
         //queue up pickup messages
-        queue[payload.orderId] = payload;
+        queue['pickup']['driver'][payload.payload.orderId] = payload;
         logEvent('pickup', payload);
         caps.emit('pickup', payload);
     });
@@ -40,9 +43,13 @@ caps.on('connection', socket => {
         logEvent('delivered', payload);
         caps.to(payload.store).emit('delivered', payload);
     });
-    socket.on('getall', () => {
-        for(const orderId in queue){
-            const payload = queue[orderId];
+    socket.on('getall', payload => {
+        console.log(payload);
+        let event = payload.payload;
+        let clientId = payload.clientId;
+        for(const orderId in queue[event][clientId]){
+            console.log('this is the queue', queue);
+            const payload = queue[event][clientId][orderId];
             caps.emit('pickup', payload);
         };
     });
